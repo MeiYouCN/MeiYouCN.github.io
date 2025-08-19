@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>An ordinary artist</title>
+  <style>
+    /* 基础重置与全局样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    body {
+      background-color: #1e1e1e;
+      color: #fff;
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* 动态背景适配 */
+    .dynamic-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+    }
+    .dynamic-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .dynamic-bg img {
+      display: none; 
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* 可伸缩顶条 */
+    .topbar {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      background: rgba(30, 30, 30, 0.9);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      z-index: 999;
+    }
+    .topbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      height: 60px;
+      transition: height 0.3s ease;
+    }
+    .topbar.expanded {
+      background: rgba(30, 30, 30, 0.95);
+    }
+    .topbar.expanded .container {
+      height: 120px; 
+    }
+    .topbar h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    .topbar nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .topbar nav a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 10px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .topbar nav a:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    /* 背景切换按钮样式 */
+    .bg-toggle {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-size: 0.9rem;
+    }
+    .bg-toggle.off {
+      background: #6c757d;
+    }
+    /* 内容容器（优化居中与紧凑性） */
+    .content {
+      max-width: 1200px;
+      margin: 80px auto 40px;
+      padding: 0 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center; /* 确保卡片整体居中 */
+      flex: 1;
+      width: fit-content; /* 消除两侧多余空间 */
+    }
+    /* 卡片样式（去除底部多余部分） */
+    .card {
+      flex: 1 1 280px;
+      max-width: 350px; /* 限制最大宽度，避免过宽导致留白 */
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px 20px 15px; /* 减少底部内边距 */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s, box-shadow 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      color: #333;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 
+                  0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .card img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 12px; /* 缩减图片与标题间距 */
+    }
+    .card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 6px; /* 缩减标题与内容间距 */
+    }
+    .card p {
+      color: #555;
+      font-size: 0.95rem;
+      margin-bottom: 0; /* 移除段落底部默认留白 */
+    }
+    .card button {
+      margin-top: 12px; /* 缩减按钮与内容间距 */
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .card button:hover {
+      background: #005fe8;
+    }
+    /* 底部黑色长条 */
+    .footer {
+      width: 100%;
+      background-color: #000;
+      color: #fff;
+      padding: 15px 0;
+      text-align: center;
+      margin-top: auto;
+    }
+    .footer p {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    /* 响应式适配 */
+    @media (max-width: 768px) {
+      .topbar .container {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        padding: 10px 20px;
+      }
+      .topbar.expanded .container {
+        height: auto; 
+      }
+      .content {
+        margin-top: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 动态背景 -->
+  <div class="dynamic-bg">
+    <video id="bgVideo" autoplay loop muted playsinline>
+      <source src="/bg.mp4" type="video/mp4">
+    </video>
+    <img id="bgImg" src="/bg.jpeg" alt="静态背景">
+  </div>
+  <!-- 可伸缩顶条 -->
+  <header class="topbar" id="topbar">
+    <div class="container">
+      <h1>An ordinary artist</h1>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/nav">Navigation</a>
+        <a href="https://github.com/MeiYouCN">Github</a>
+        <!-- 背景切换按钮 -->
+        <button class="bg-toggle" id="bgToggle">Video: On</button>
+      </nav>
+    </div>
+  </header>
+  <!-- 内容区域 -->
+  <main class="content">
+    <!-- 卡片1 -->
+    <div class="card">
+      <img src="/other/logo.jpg" alt="logo">
+      <h3>About me</h3>
+      <p>liaozijie2010@outlook.</p>
+      <p>QQ:2806138182</p>
+    </div>
+    <!-- 卡片2 -->
+    <div class="card" style="border-radius: 20px;">
+      <img src="/other/fengjin.png" alt="fengjin">
+      <h3>Discord fan group</h3>
+      <p>https://discord.gg/BHQuDxwa</p>    
+    </div>
+    <!-- 卡片3 -->
+    <div class="card" style="border-radius: 8px;">
+      <img src="/other/Fangroup.jpg" alt="Fan group">
+      <h3>QQ Fan group</h3>
+      <p>765321747</p>
+    </div>
+  </main>
+  <!-- 底部黑色长条 -->
+  <footer class="footer">
+    <p>This website is made by the UP owner himself. The UP owner has also open-sourced the website. If needed, you can go to my GitHub homepage to find the repository and download it.</p>
+  </footer>
+  <script>
+    // 顶条伸缩逻辑
+    const topbar = document.getElementById('topbar');
+    let lastScrollTop = 0;
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      if (scrollTop > lastScrollTop) {
+        topbar.style.transform = 'translateY(-100%)';
+      } else {
+        topbar.style.transform = 'translateY(0)';
+      }
+      lastScrollTop = scrollTop;
+      if (scrollTop > 100) {
+        topbar.classList.add('expanded');
+      } else {
+        topbar.classList.remove('expanded');
+      }
+    });
+    // 背景切换逻辑
+    const bgVideo = document.getElementById('bgVideo');
+    const bgImg = document.getElementById('bgImg');
+    const bgToggle = document.getElementById('bgToggle');
+    let isVideoOn = true; // 默认视频背景开启
+    // 切换按钮点击事件
+    bgToggle.addEventListener('click', () => {
+      isVideoOn = !isVideoOn;
+      if (isVideoOn) {
+        // 切换为视频背景
+        bgVideo.style.display = 'block';
+        bgImg.style.display = 'none';
+        bgToggle.textContent = 'Video: On';
+        bgToggle.classList.remove('off');
+      } else {
+        // 切换为图片背景
+        bgVideo.style.display = 'none';
+        bgImg.style.display = 'block';
+        bgToggle.textContent = 'Video: Off';
+        bgToggle.classList.add('off');
+      }
+    });
+    // 视频帧率检测逻辑（低于30帧自动切换为图片）
+    let frameCount = 0;
+    let lastTime = null;
+    let isVideoValid = true;
+    bgVideo.addEventListener('canplay', () => {
+      lastTime = performance.now();
+      function checkFps(timestamp) {
+        if (!isVideoValid || !isVideoOn) return; // 若手动关闭视频则停止检测
+        
+        frameCount++;
+        const elapsed = timestamp - lastTime;
+        
+        if (elapsed >= 1000) {
+          const fps = frameCount / (elapsed / 1000);
+          if (fps < 30) {
+            bgVideo.style.display = 'none';
+            bgImg.style.display = 'block';
+            isVideoOn = false;
+            bgToggle.textContent = 'Video: Off';
+            bgToggle.classList.add('off');
+            isVideoValid = false;
+          }
+          frameCount = 0;
+          lastTime = timestamp;
+        }
+        
+        requestAnimationFrame(checkFps);
+      }
+      
+      requestAnimationFrame(checkFps);
+    });
+    // 视频加载失败时切换为图片
+    bgVideo.addEventListener('error', () => {
+      bgVideo.style.display = 'none';
+      bgImg.style.display = 'block';
+      isVideoOn = false;
+      bgToggle.textContent = 'Video: Off';
+      bgToggle.classList.add('off');
+    });
+  </script>
+</body>
+</html>
