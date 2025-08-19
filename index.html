@@ -21,7 +21,7 @@
       display: flex;
       flex-direction: column;
     }
-    /* 动态背景适配：优先加载视频，不支持则 fallback 到图片 */
+    /* 动态背景适配 */
     .dynamic-bg {
       position: fixed;
       top: 0;
@@ -41,15 +41,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-    }
-    /* 浏览器不支持视频时，显示图片 */
-    @supports not (video) {
-      .dynamic-bg video {
-        display: none;
-      }
-      .dynamic-bg img {
-        display: block;
-      }
     }
     /* 可伸缩顶条 */
     .topbar {
@@ -81,6 +72,11 @@
       font-size: 1.8rem;
       font-weight: 600;
     }
+    .topbar nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
     .topbar nav a {
       color: #fff;
       text-decoration: none;
@@ -92,7 +88,21 @@
     .topbar nav a:hover {
       background: rgba(255, 255, 255, 0.1);
     }
-    /* 内容容器 */
+    /* 背景切换按钮样式 */
+    .bg-toggle {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-size: 0.9rem;
+    }
+    .bg-toggle.off {
+      background: #6c757d;
+    }
+    /* 内容容器（优化居中与紧凑性） */
     .content {
       max-width: 1200px;
       margin: 80px auto 40px;
@@ -100,31 +110,29 @@
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
-      justify-content: center;
+      justify-content: center; /* 确保卡片整体居中 */
       flex: 1;
+      width: fit-content; /* 消除两侧多余空间 */
     }
-    /* 卡片基础样式（修改后） */
+    /* 卡片样式（去除底部多余部分） */
     .card {
       flex: 1 1 280px;
-      /* 白色背景，透明度80%，毛玻璃效果 */
+      max-width: 350px; /* 限制最大宽度，避免过宽导致留白 */
       background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-radius: 12px;
-      padding: 20px;
+      padding: 20px 20px 15px; /* 减少底部内边距 */
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       transition: transform 0.3s, box-shadow 0.3s;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      /* 确保内容颜色与白色背景对比明显 */
       color: #333;
     }
-    /* 卡片hover效果（边角发亮发光） */
     .card:hover {
       transform: translateY(-5px);
-      /* 边角发光效果，通过阴影实现 */
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 
                   0 6px 18px rgba(0, 0, 0, 0.3);
     }
@@ -133,18 +141,19 @@
       height: 80px;
       border-radius: 50%;
       object-fit: cover;
-      margin-bottom: 12px;
+      margin-bottom: 12px; /* 缩减图片与标题间距 */
     }
     .card h3 {
       font-size: 1.25rem;
-      margin-bottom: 8px;
+      margin-bottom: 6px; /* 缩减标题与内容间距 */
     }
     .card p {
       color: #555;
       font-size: 0.95rem;
+      margin-bottom: 0; /* 移除段落底部默认留白 */
     }
     .card button {
-      margin-top: 16px;
+      margin-top: 12px; /* 缩减按钮与内容间距 */
       padding: 8px 16px;
       border: none;
       border-radius: 4px;
@@ -190,10 +199,10 @@
 <body>
   <!-- 动态背景 -->
   <div class="dynamic-bg">
-    <video autoplay loop muted playsinline>
+    <video id="bgVideo" autoplay loop muted playsinline>
       <source src="bg.mp4" type="video/mp4">
     </video>
-    <img src="bg.jpeg" alt="静态背景">
+    <img id="bgImg" src="bg.jpeg" alt="静态背景">
   </div>
   <!-- 可伸缩顶条 -->
   <header class="topbar" id="topbar">
@@ -203,6 +212,8 @@
         <a href="/">Home</a>
         <a href="/nav">Navigation</a>
         <a href="https://github.com/MeiYouCN">Github</a>
+        <!-- 背景切换按钮 -->
+        <button class="bg-toggle" id="bgToggle">Video: On</button>
       </nav>
     </div>
   </header>
@@ -226,32 +237,89 @@
       <h3>Fan group</h3>
       <p>At present, I only have a fan group on QQ. Later, I will also create a fan group on Telegram. You can join it on the navigation page.</p>
     </div>
-    </div>
   </main>
   <!-- 底部黑色长条 -->
   <footer class="footer">
     <p>This website is made by the UP owner himself. The UP owner has also open-sourced the website. If needed, you can go to my GitHub homepage to find the repository and download it.</p>
   </footer>
   <script>
-    // 顶条伸缩逻辑：滚动时触发
+    // 顶条伸缩逻辑
     const topbar = document.getElementById('topbar');
     let lastScrollTop = 0;
     window.addEventListener('scroll', () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       if (scrollTop > lastScrollTop) {
-        // 向下滚动，收缩顶条
         topbar.style.transform = 'translateY(-100%)';
       } else {
-        // 向上滚动，展开顶条
         topbar.style.transform = 'translateY(0)';
       }
       lastScrollTop = scrollTop;
-      // 滚动超过一定距离时，添加 expanded 类（可选增强效果）
       if (scrollTop > 100) {
         topbar.classList.add('expanded');
       } else {
         topbar.classList.remove('expanded');
       }
+    });
+    // 背景切换逻辑
+    const bgVideo = document.getElementById('bgVideo');
+    const bgImg = document.getElementById('bgImg');
+    const bgToggle = document.getElementById('bgToggle');
+    let isVideoOn = true; // 默认视频背景开启
+    // 切换按钮点击事件
+    bgToggle.addEventListener('click', () => {
+      isVideoOn = !isVideoOn;
+      if (isVideoOn) {
+        // 切换为视频背景
+        bgVideo.style.display = 'block';
+        bgImg.style.display = 'none';
+        bgToggle.textContent = 'Video: On';
+        bgToggle.classList.remove('off');
+      } else {
+        // 切换为图片背景
+        bgVideo.style.display = 'none';
+        bgImg.style.display = 'block';
+        bgToggle.textContent = 'Video: Off';
+        bgToggle.classList.add('off');
+      }
+    });
+    // 视频帧率检测逻辑（低于30帧自动切换为图片）
+    let frameCount = 0;
+    let lastTime = null;
+    let isVideoValid = true;
+    bgVideo.addEventListener('canplay', () => {
+      lastTime = performance.now();
+      function checkFps(timestamp) {
+        if (!isVideoValid || !isVideoOn) return; // 若手动关闭视频则停止检测
+        
+        frameCount++;
+        const elapsed = timestamp - lastTime;
+        
+        if (elapsed >= 1000) {
+          const fps = frameCount / (elapsed / 1000);
+          if (fps < 30) {
+            bgVideo.style.display = 'none';
+            bgImg.style.display = 'block';
+            isVideoOn = false;
+            bgToggle.textContent = 'Video: Off';
+            bgToggle.classList.add('off');
+            isVideoValid = false;
+          }
+          frameCount = 0;
+          lastTime = timestamp;
+        }
+        
+        requestAnimationFrame(checkFps);
+      }
+      
+      requestAnimationFrame(checkFps);
+    });
+    // 视频加载失败时切换为图片
+    bgVideo.addEventListener('error', () => {
+      bgVideo.style.display = 'none';
+      bgImg.style.display = 'block';
+      isVideoOn = false;
+      bgToggle.textContent = 'Video: Off';
+      bgToggle.classList.add('off');
     });
   </script>
 </body>
